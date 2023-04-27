@@ -1,0 +1,152 @@
+---
+title: "example"
+output: html_document
+---
+```{r}
+library(ade4)
+library(ggrepel)
+library(ggbiplot)
+library(reshape)
+library(dplyr)
+library(viridis)
+library(devtools)
+library(MASS)
+library(tidyverse)
+library(broom)
+library(plyr)
+library(ggthemes)
+```
+## R Markdown
+
+```{r}
+data <- data.frame(read.csv("/Users/nidhisaduvala/Downloads/imdb_processed.csv", header = TRUE))
+```
+
+```{r}
+head(data)
+
+```
+
+
+```{r}
+colSums(is.na(data))
+```
+
+```{r}
+data1<-data[complete.cases(data),]
+colSums(is.na(data1))
+data3<- data1[data1$kind=="movie",]
+data3<- data3[data3$runtime<quantile(data1$runtime,0.97),]
+data1<-data3
+```
+
+```{r}
+#g_complete<-data[complete.cases(data),]
+#genre_data <- g_complete[,c('genre')]
+#x<-noquote(gsub("\\[|\\]", "", genre_data))
+#x
+```
+
+```{r}
+data3<- data1[data1$kind=="movie",]
+data3<- data3[data3$runtime<quantile(data1$runtime,0.97),]
+```
+
+```{r}
+data3[data3==''] <- NA
+data3 = data3[!is.na(data3$genre),]
+data3 = data3[!is.na(data3$director),]
+data3['genres_sep'] = gsub("\\[|\\]", "", data3$genre)
+data3['director_sep'] = gsub("\\[|\\]", "", data3$director)
+```
+
+```{r}
+for (i in 1:length(data3$genre)){
+  data3[i,'primary_genre'] = list(strsplit(data3$genres_sep, ",")[[i]][1])
+}
+```
+
+```{r}
+data3$primary_genre<-gsub("'","",data3$primary_genre)
+```
+
+```{r}
+for (i in 1:length(data3$director)){
+  data3[i,'primary_director'] = list(strsplit(data3$director_sep, ",")[[i]][1])
+}
+```
+
+```{r}
+data3$primary_director<-gsub("'","",data3$primary_director)
+```
+
+#Does the movie genres have an impact on ratings and votes?
+```{r}
+ratingdat <- ddply(data3, c("primary_genre"), summarise,
+                   M = mean(rating, na.rm = TRUE),
+                   SE = sd(rating)/sqrt(length(rating)),
+                   N = length(rating))
+ratings<-ratingdat[which(ratingdat$N>=100),]
+```
+
+```{r}
+ratings$primary_genre <- factor(ratings$primary_genre)
+ratings$primary_genre <- reorder(ratings$primary_genre, ratings$M)
+
+ggplot(ratings,aes(x=M,xmin=M-SE,xmax=M+SE,y=primary_genre))+
+  geom_point()+
+  geom_segment(aes(x=M-SE,xend=M+SE,y= primary_genre,yend=primary_genre))+
+  theme(axis.text = element_text(size=8))+xlab("Mean Rating")+ylab("Genre")
+
+```
+#Does language have an impact on movie ratings?
+```{r}
+data3[data3==''] <- NA
+data3 = data3[!is.na(data3$language),]
+data3['language_sep'] = gsub("\\[|\\]", "", data3$language)
+
+for (i in 1:length(data3$language)){
+  data3[i,'primary_language'] = list(strsplit(data3$language_sep, ",")[[i]][1])
+}
+
+data3$primary_language<-gsub("'","",data3$primary_language)
+
+```
+
+
+```{r fig.height=7,fig.width=15}
+
+ggplot(data = data3) + 
+  aes(x = primary_language, y = rating, fill = primary_language) + 
+  geom_boxplot()
+```
+
+```{r}
+directors_grp = data3 %>% group_by(primary_director)  %>%
+                    summarise(avg_ratings = mean(rating),
+                              avg_votes = mean(vote),
+                              success_rate = (avg_ratings*avg_votes),
+                              list_titles = list(title),
+                              .groups = 'drop')
+```
+
+
+```{r}
+top_director <- directors_grp[order(-directors_grp$success_rate),]
+head(top_director)
+```
+
+```{r}
+top_director$list_titles[] <- lapply(top_director$list_titles, as.character)
+
+```
+
+```{r}
+top_director %>%
+  dplyr::select(primary_director,list_titles)
+```
+
+```{r}
+top5_rating <- top_director[order(top_director$success_rate,decreasing = T),][1:5,]
+top5_rating
+```

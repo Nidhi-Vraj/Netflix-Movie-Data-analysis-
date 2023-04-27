@@ -1,0 +1,277 @@
+---
+title: "Final Project"
+author: "Sai Charan Chintala, Nidhi Vraj Sadhuvala"
+date: "4/26/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ade4)
+library(ggrepel)
+library(ggbiplot)
+library(reshape)
+library(dplyr)
+library(viridis)
+library(devtools)
+library(MASS)
+library(tidyverse)
+library(broom)
+library(plyr)
+library(ggthemes)
+```
+## R Markdown
+
+```{r}
+data <- data.frame(read.csv("/Users/nidhisaduvala/Downloads/imdb_processed.csv", header = TRUE))
+```
+
+```{r}
+colSums(is.na(data))
+```
+
+```{r}
+data1<-data[complete.cases(data),]
+colSums(is.na(data1))
+data3<- data1[data1$kind=="movie",]
+data3<- data3[data3$runtime<quantile(data1$runtime,0.97),]
+data1<-data3
+```
+
+```{r}
+ggplot(data=data1,aes(x = rating))+ ylab("number of movies") +
+  geom_histogram(binwidth=0.5) + ggtitle("Histogram plot of movie ratings") + geom_vline(aes(xintercept = median(rating)), colour="red", size=1, linetype="dashed") + geom_vline(aes(xintercept = mean(data1$rating)), colour="blue", size=1, linetype="dashed")+ annotate("text", x = mean(data1$rating) * 1.7, y = mean(data1$rating) * 1.7, label = paste("Mean =", round(mean(data1$rating),1)), col = "blue",size = 4,hjust=0.8,vjust=-1) + annotate("text", x = median(data1$rating) * 1.7, y = median(data1$rating) * 1.7, label = paste("Median =", median(data1$rating)), col = "red",size = 4,hjust=1,vjust=1)
+```
+
+
+```{r}
+ggplot(data=data1,aes(x = runtime))+
+  geom_histogram(binwidth=5)+
+  xlim(c(0,quantile(data1$runtime,0.99)))+
+  geom_vline(aes(xintercept = median(runtime)), colour="red", size=1, linetype="dashed") + geom_vline(aes(xintercept = mean(data1$runtime)), colour="blue", size=1, linetype="dashed")+ annotate("text", x = mean(data1$runtime) * 1.7, y = mean(data1$runtime) * 1.7, label = paste("Mean =", round(mean(data1$runtime),1)), col = "blue",size = 4,hjust=0,vjust=-1) + annotate("text", x = median(data1$runtime) * 1.7, y = median(data1$runtime) * 1.7, label = paste("Median =", median(data1$runtime)), col = "red",size = 4,hjust= 0,vjust=1) + ggtitle("Runtime Histogram") + ylab('count')
+
+```
+
+```{r}
+ggplot(data=data1,aes(x = year))+
+  geom_histogram(binwidth=1)+geom_vline(xintercept=1945,col="blue")+
+    annotate("text",x=1945+5,y=4.5,label="WW II",vjust=-3,
+        col="blue",fontface="bold")+
+    geom_vline(xintercept=1934,col="darkgreen",lwd=12,alpha=1/2)+
+    annotate("text",x=1934-8,y=4.5,vjust=-3,
+        label="Great\nDepression",col="darkgreen",fontface="bold")+ylab("count of movies") + ggtitle("Number of movies released across all the years")
+
+
+```
+1. movies count in great depression is less compared to before and after great depression
+2. World war 2 won't have much affect on movies count.
+3. Count of movies is increasing exponentiallu over the years
+
+```{r}
+ggplot(data=data1,aes(x = runtime))+
+  geom_histogram(binwidth=3)+
+  xlim(c(0,quantile(data1$runtime,0.99))) + ggtitle("Runtime Histogram")
+```
+1. Most of the movies have runtime between 90 and 120 minutes.
+2. Slightly skewed to right
+
+```{r}
+ggplot(data=data1,aes(x = vote))+
+  geom_histogram(binwidth=500)+
+  xlim(c(0,quantile(data1$vote,0.9))) + ggtitle("Votes histogram")
+```
+1. Here the bin size is 500. Most of the movies have votes between 0-500 and decreasing gradually.
+2. Distribution is highly skewed to right
+
+```{r}
+ggplot(data=data1,aes(x=year,y=rating))+
+  geom_point(alpha=1/8,position="jitter",scale=0.8)+ 
+  geom_line(stat="summary",fun.y=median,col=2,linetype=1,size =1)+geom_vline(xintercept=1945,col="blue")+
+    annotate("text",x=1945+5,y=4.5,label="WW II",
+        col="blue",fontface="bold")+
+    geom_vline(xintercept=1934,col="darkgreen",lwd=12,alpha=1/2)+
+    annotate("text",x=1934-8,y=4.5,
+        label="Great\nDepression",col="darkgreen",fontface="bold")+ ggtitle("Average Ratings and movies count over the years")
+```
+1.Medians across the years are almost stable 1960 and gradually movieing decreasing trend
+2. There is no significant decrease in ratings indicates that there is no quality loss during great depression and ww2
+
+```{r}
+ggplot(data1, aes(x = vote, y = rating)) +
+          geom_point()+ggtitle("Average Rating vs Votes")
+```
+1. More than 90% of the movies have votes between 0-500k
+2. The movie with the highest number of votes is the 'the Shawshank Redemption" with average rate above 9.3
+
+
+1. Most of the movies have duration between 1.5-2hrs. 
+2. And most of these movies have ratings between 6 and 8.
+3. However, as the duration increases, distribution of the ratings decreases.
+
+```{r}
+ggplot(data1, aes(x = year, y = rating)) +
+          geom_bin2d() +
+          geom_smooth(color="black") +
+          scale_x_continuous() +
+          scale_y_continuous(breaks = 1:10) +
+          scale_fill_viridis_c(option = "plasma", labels = comma, trans = 'log10')+geom_vline(xintercept=1945,col=2)+
+    annotate("text",x=1945+5,y=4.5,label="WW II",
+        col=2,fontface="bold")+
+    geom_vline(xintercept=1934,col="darkgreen",lwd=12,alpha=1/2)+
+    annotate("text",x=1934-8,y=4.5,
+        label="Great\nDepression",col="darkgreen",fontface="bold")+ ggtitle("Linear model and relationship between ratings and count over the years")
+```
+1. Distribution of ratings is increased over time.
+2. Linearly fitted ratings lines have decreased over time.
+3. Movies are increasing over the years
+4. Many movies have ratings between 6-8 in most of the years
+
+```{r}
+ggplot(data1, aes(x = vote, y = rating)) +
+          geom_bin2d() +
+          geom_smooth(color = "red") +
+          scale_x_log10(labels = comma) +
+          scale_y_continuous(breaks = 1:10) +
+          scale_fill_viridis_c(labels = comma) + ggtitle("Votes vs rating heatmap")
+```
+1. More movies have votes between 1000 and 10000 with average rating between 6-8
+2. As the number of votes increasing, distribution of ratings going towards higher values
+
+```{r}
+data1<-data[complete.cases(data),]
+colSums(is.na(data1))
+data3<- data1[data1$kind=="movie",]
+data3<- data3[data3$runtime<quantile(data1$runtime,0.97),]
+data1<-data3
+```
+
+```{r}
+data3<- data1[data1$kind=="movie",]
+data3<- data3[data3$runtime<quantile(data1$runtime,0.97),]
+```
+
+```{r}
+data3[data3==''] <- NA
+data3 = data3[!is.na(data3$genre),]
+data3 = data3[!is.na(data3$director),]
+data3['genres_sep'] = gsub("\\[|\\]", "", data3$genre)
+data3['director_sep'] = gsub("\\[|\\]", "", data3$director)
+```
+
+```{r}
+for (i in 1:length(data3$genre)){
+  data3[i,'primary_genre'] = list(strsplit(data3$genres_sep, ",")[[i]][1])
+}
+```
+
+```{r}
+data3$primary_genre<-gsub("'","",data3$primary_genre)
+```
+
+```{r}
+for (i in 1:length(data3$director)){
+  data3[i,'primary_director'] = list(strsplit(data3$director_sep, ",")[[i]][1])
+}
+```
+
+```{r}
+data3$primary_director<-gsub("'","",data3$primary_director)
+```
+
+#Does the movie genres have an impact on ratings and votes?
+```{r}
+ratingdat <- ddply(data3, c("primary_genre"), summarise,
+                   M = mean(rating, na.rm = TRUE),
+                   SE = sd(rating)/sqrt(length(rating)),
+                   N = length(rating))
+ratings<-ratingdat[which(ratingdat$N>=100),]
+```
+
+```{r}
+
+
+
+
+ratings$primary_genre <- factor(ratings$primary_genre)
+ratings$primary_genre <- reorder(ratings$primary_genre, ratings$M)
+
+ggplot(ratings,aes(x=M,xmin=M-SE,xmax=M+SE,y=primary_genre))+
+  geom_point()+
+  geom_segment(aes(x=M-SE,xend=M+SE,y= primary_genre,yend=primary_genre))+
+  theme(axis.text = element_text(size=8))+xlab("Mean Rating")+ylab("Genre")
+
+```
+
+
+```{r}
+
+data3[data3==''] <- NA
+data3 = data3[!is.na(data3$language),]
+data3['language_sep'] = gsub("\\[|\\]", "", data3$language)
+
+for (i in 1:length(data3$language)){
+  data3[i,'primary_language'] = list(strsplit(data3$language_sep, ",")[[i]][1])
+}
+
+data3$primary_language<-gsub("'","",data3$primary_language)
+
+
+ratingdat_lan <- ddply(data3, c("primary_language"), summarise,
+                   M = mean(rating, na.rm = TRUE),
+                   SE = sd(rating)/sqrt(length(rating)),
+                   N = length(rating))
+ratings_lan<-ratingdat_lan[which(ratingdat_lan$N>=200),]
+
+```
+
+
+```{r}
+primary_three_language=data3[data3$primary_language == c("English", "Japanese", "French"),]
+```
+
+
+```{r}
+ggplot(data = primary_three_language) + 
+  aes(x = primary_language, y = rating, fill = primary_language) + 
+  geom_boxplot()
+```
+
+
+#top director
+```{r}
+directors_grp = data3 %>% group_by(primary_director)  %>%
+                    summarise(avg_ratings = mean(rating),
+                              avg_votes = mean(vote),
+                              success_rate = (avg_ratings*avg_votes),
+                              list_titles = list(title),
+                              .groups = 'drop')
+```
+
+
+```{r}
+top_director <- directors_grp[order(-directors_grp$success_rate),]
+head(top_director)
+```
+
+```{r}
+top_director$list_titles[] <- lapply(top_director$list_titles, as.character)
+
+```
+
+```{r}
+top_director %>%
+  dplyr::select(primary_director,list_titles)
+```
+
+```{r}
+top5_rating <- top_director[order(top_director$success_rate,decreasing = T),][1:5,]
+top5_rating
+```
+
+```{r}
+head(top5_rating$list_titles)
+```
+
