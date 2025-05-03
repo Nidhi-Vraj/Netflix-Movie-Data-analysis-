@@ -1,6 +1,6 @@
 # Netflix-Movie-Data-analysis-
 
-# INTRODUCTION
+## INTRODUCTION
 
 Based on the massive movie information available on the internet, it would be fascinating to learn
 what aspects contribute to a film's success and determine how uniform or polarized the opinion of a movie is.
@@ -11,7 +11,7 @@ this study is IMDB rating, while the rest of the components in the IMDB movie da
 on operating predictions.
 We will be exploring the IMDB Movies Datasets taken from https://www.kaggle.com/.
 
-# STATEMENT OF GOALS
+## STATEMENT OF GOALS
 
 Through a series of plots and inferences, we want to investigate the findings of the following questions:
 1. Relationship between the length of a movie(runtime) and its rating on IMDB.
@@ -22,7 +22,7 @@ Through a series of plots and inferences, we want to investigate the findings of
 6. Does language have an impact on movie ratings?
 7. Does a top successful director affect the movie ratings?
 
-# DATA DESCRIPTION
+## DATA DESCRIPTION
 This dataset contains 14 columns for 8451 shows from various countries spanned across 89 years between
 1916 and 2005. When we first looked at the Dataset, we noticed that only 4 of the columns contained numerical
 values, while the rest were categorical, meaning that the data for those columns was stored in a labeled manner.
@@ -30,19 +30,19 @@ The description of the variables in the dataset is as follows:
 
 
 Categorical Variables:
-● Title: describes name of the show
-● Year: the year in which the movie/show was released
-● Kind: kind of TV show i.e., tv mini series, movie, episode
-● Genre: refers to the type of story being told and is decided by the playwright
-● Country: Countries In Which The Shows Were Released
-● Language: describes in which language the show was shot
-● Cast: the group of actors who acted in the show
-● Director: director of the show
-● Writer: person who writes the scripts
-● Composer: names of music director
+* Title: describes name of the show
+* Year: the year in which the movie/show was released
+* Kind: kind of TV show i.e., tv mini series, movie, episode
+* Genre: refers to the type of story being told and is decided by the playwright
+* Country: Countries In Which The Shows Were Released
+* Language: describes in which language the show was shot
+* Cast: the group of actors who acted in the show
+* Director: director of the show
+* Writer: person who writes the scripts
+* Composer: names of music director
 
 
-# DATA CLEANING:
+## DATA CLEANING:
 
 We deleted outliers (97 quartile runtime values) that could potentially skew the distribution in this dataset
 by removing redundant information such as observations with numerical null values. While analyzing the
@@ -52,7 +52,7 @@ movies.
 These values depict the number of N/A values in that particular column. The variables ‘runtime’, ‘rating’
 and ‘vote’ have 1653, 316 and 316 null values respectively which were removed from the data.
 
-# CONCLUSION:
+## CONCLUSION:
 
 1. If the runtime of the movie is outside the range 90 to 120 minutes then the ratings are most
 likely to decrease.
